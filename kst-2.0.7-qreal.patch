@@ -1,0 +1,104 @@
+diff -up kst-2.0.7/src/libkstapp/circleitem.cpp.qreal kst-2.0.7/src/libkstapp/circleitem.cpp
+--- kst-2.0.7/src/libkstapp/circleitem.cpp.qreal	2013-06-27 01:41:22.000000000 -0500
++++ kst-2.0.7/src/libkstapp/circleitem.cpp	2013-08-13 01:31:29.012803851 -0500
+@@ -70,7 +70,7 @@ void CircleItem::creationPolygonChanged(
+     const QPolygonF poly = mapFromScene(view()->creationPolygon(View::MouseMove));
+     qreal dx = poly.last().x();
+     qreal dy = poly.last().y();
+-    qreal r = qMax(qreal(2.0),sqrt(dx*dx + dy*dy));
++    qreal r = qMax(qreal(2.0),qSqrt(dx*dx + dy*dy));
+ 
+     QRectF newRect(-r, -r, 2.0*r, 2.0*r);
+     setViewRect(newRect);
+diff -up kst-2.0.7/src/libkstapp/plotrenderitem.cpp.qreal kst-2.0.7/src/libkstapp/plotrenderitem.cpp
+--- kst-2.0.7/src/libkstapp/plotrenderitem.cpp.qreal	2013-06-27 01:41:22.000000000 -0500
++++ kst-2.0.7/src/libkstapp/plotrenderitem.cpp	2013-08-13 01:42:30.564773288 -0500
+@@ -557,11 +557,11 @@ void PlotRenderItem::mouseMoveEvent(QGra
+ 
+   const QPointF p = event->pos();
+ 
+-  double y = (p.y() - rect().bottom())/(rect().top()-rect().bottom())*(plotItem()->yMax()-plotItem()->yMin())+plotItem()->yMin();
++  qreal y = (p.y() - rect().bottom())/(rect().top()-rect().bottom())*(plotItem()->yMax()-plotItem()->yMin())+plotItem()->yMin();
+   y = qMin(y, plotItem()->yMax());
+   y = qMax(y, plotItem()->yMin());
+ 
+-  double x = (p.x() - rect().left())/(rect().right()-rect().left())*(plotItem()->xMax()-plotItem()->xMin())+plotItem()->xMin();
++  qreal x = (p.x() - rect().left())/(rect().right()-rect().left())*(plotItem()->xMax()-plotItem()->xMin())+plotItem()->xMin();
+   x = qMin(x, plotItem()->xMax());
+   x = qMax(x, plotItem()->xMin());
+ 
+@@ -661,8 +661,8 @@ void PlotRenderItem::mouseReleaseEvent(Q
+   }
+ }
+ 
+-void PlotRenderItem::hoverYZoomMouseCursor(double y) {
+-  double py;
++void PlotRenderItem::hoverYZoomMouseCursor(qreal y) {
++  qreal py;
+ 
+   py = (y-plotItem()->yMin())/(plotItem()->yMax() - plotItem()->yMin())*(rect().top()-rect().bottom()) + rect().bottom();
+   py = qMin(py, rect().bottom());
+@@ -676,8 +676,8 @@ void PlotRenderItem::hoverYZoomMouseCurs
+ 
+ }
+ 
+-void PlotRenderItem::hoverXZoomMouseCursor(double x) {
+-  double px;
++void PlotRenderItem::hoverXZoomMouseCursor(qreal x) {
++  qreal px;
+ 
+   px = (x-plotItem()->xMin())/(plotItem()->xMax() - plotItem()->xMin())*(rect().right()-rect().left()) + rect().left();
+   px = qMax(px, rect().left());
+@@ -690,8 +690,8 @@ void PlotRenderItem::hoverXZoomMouseCurs
+   update(); //FIXME should optimize instead of redrawing entire curve!
+ }
+ 
+-void PlotRenderItem::dragYZoomMouseCursor(double y) {
+-  double py;
++void PlotRenderItem::dragYZoomMouseCursor(qreal y) {
++  qreal py;
+ 
+   py = (y-plotItem()->yMin())/(plotItem()->yMax() - plotItem()->yMin())*(rect().top()-rect().bottom()) + rect().bottom();
+   py = qMin(py, rect().bottom());
+@@ -702,8 +702,8 @@ void PlotRenderItem::dragYZoomMouseCurso
+ 
+ }
+ 
+-void PlotRenderItem::dragXZoomMouseCursor(double x) {
+-  double px;
++void PlotRenderItem::dragXZoomMouseCursor(qreal x) {
++  qreal px;
+ 
+   px = (x-plotItem()->xMin())/(plotItem()->xMax() - plotItem()->xMin())*(rect().right()-rect().left()) + rect().left();
+   px = qMax(px, rect().left());
+diff -up kst-2.0.7/src/libkstapp/plotrenderitem.h.qreal kst-2.0.7/src/libkstapp/plotrenderitem.h
+--- kst-2.0.7/src/libkstapp/plotrenderitem.h.qreal	2013-06-27 01:41:22.000000000 -0500
++++ kst-2.0.7/src/libkstapp/plotrenderitem.h	2013-08-13 01:43:39.756038046 -0500
+@@ -73,11 +73,11 @@ class PlotRenderItem : public ViewItem
+ 
+     QList<PlotItem*> sharedOrTiedPlots(bool sharedX, bool sharedY);
+ 
+-    void hoverYZoomMouseCursor(double y);
+-    void hoverXZoomMouseCursor(double x);
++    void hoverYZoomMouseCursor(qreal y);
++    void hoverXZoomMouseCursor(qreal x);
+ 
+-    void dragYZoomMouseCursor(double y);
+-    void dragXZoomMouseCursor(double x);
++    void dragYZoomMouseCursor(qreal y);
++    void dragXZoomMouseCursor(qreal x);
+   public Q_SLOTS:
+     virtual void edit();
+     virtual void raise();
+diff -up kst-2.0.7/src/libkstapp/view.cpp.qreal kst-2.0.7/src/libkstapp/view.cpp
+--- kst-2.0.7/src/libkstapp/view.cpp.qreal	2013-06-27 01:41:22.000000000 -0500
++++ kst-2.0.7/src/libkstapp/view.cpp	2013-08-12 15:24:42.354774073 -0500
+@@ -630,7 +630,7 @@ double View::resetPlotFontSizes(QList<Pl
+   // agressively.  The behavior looks pretty good to me with 6.
+   qreal count = qMax(plots.count()-6, 1);
+ 
+-  qreal newPointSize = qMax(pointSize/sqrt(count) , ApplicationSettings::self()->minimumFontSize());
++  qreal newPointSize = qMax(pointSize/qSqrt(count) , ApplicationSettings::self()->minimumFontSize());
+   if (newPointSize<pointSize) {
+     pointSize = newPointSize;
+   }
