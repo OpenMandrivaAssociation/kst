@@ -9,7 +9,7 @@ Version:	2.0.7
 Release:	2
 License:	GPLv2+
 Group:		Sciences/Other
-Url:		http://kst.kde.org/
+Url:		https://kst.kde.org/
 Source0:	http://downloads.sourceforge.net/kst/%{name}-%{version}.tar.gz
 # Fix calls to set_target_properties in KstMacros.cmake
 # https://bugs.kde.org/show_bug.cgi?id=322286
